@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.1 (2024-10-20)
+
+- Fix: Clean dist before build to exclude stale files
+- Fix: Update package name from scoped to "effect-env"
+- Docs: Add badges and update install commands
+- Chore: Restrict published files to dist/, README.md, CHANGELOG.md
+
 ## v0.1.0 (2024-10-20)
 
 Initial release of effect-env.
