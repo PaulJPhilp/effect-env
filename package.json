@@ -1,5 +1,5 @@
 {
-	"name": "@paulphilp/effect-env",
+	"name": "effect-env",
 	"version": "0.1.0",
 	"description": "Typed, testable, policy-aware env management for Effect apps",
 	"main": "dist/index.js",
@@ -10,11 +10,10 @@
 			"import": "./dist/index.js"
 		}
 	},
-	"files": ["dist"],
-	"publishConfig": {
-		"access": "public"
-	},
+	"files": ["dist", "README.md", "CHANGELOG.md"],
 	"scripts": {
+		"clean": "rm -rf dist",
+		"prebuild": "npm run clean",
 		"build": "tsc",
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",

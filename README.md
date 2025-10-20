@@ -1,13 +1,17 @@
 # effect-env — typed, testable, policy-aware env for Effect apps
 
+[![npm version](https://img.shields.io/npm/v/effect-env.svg)](https://www.npmjs.com/package/effect-env)
+[![GitHub](https://img.shields.io/github/stars/PaulJPhilp/effect-env?style=social)](https://github.com/PaulJPhilp/effect-env)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A TypeScript library for managing environment variables with type safety, schema validation, and security features using Effect.
 
 ## Installation
 
 ```bash
-bun add @paulphilp/effect-env
+npm install effect-env
 # or
-npm install @paulphilp/effect-env
+bun add effect-env
 ```
 
 ## Quickstart
@@ -16,7 +20,7 @@ npm install @paulphilp/effect-env
 
 ```typescript
 import { Schema as S } from "effect"
-import { makeEnvSchema } from "@paulphilp/effect-env"
+import { makeEnvSchema } from "effect-env"
 
 const envSchema = makeEnvSchema(
   S.Struct({
@@ -34,7 +38,7 @@ type AppEnv = S.Schema.Type<typeof envSchema>
 
 ```typescript
 import { Effect, Layer } from "effect"
-import { EnvLayer } from "@paulphilp/effect-env"
+import { EnvLayer } from "effect-env"
 
 // For production
 const envLayer = EnvLayer.fromProcess(envSchema)
