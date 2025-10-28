@@ -37,14 +37,14 @@ type AppEnv = S.Schema.Type<typeof envSchema>
 2. **Provide the Env layer** in your app:
 
 ```typescript
-import { Effect, Layer } from "effect"
-import { EnvLayer } from "effect-env"
+import { Effect } from "effect"
+import { EnvTag, fromProcess, fromDotenv } from "effect-env"
 
 // For production
-const envLayer = EnvLayer.fromProcess(envSchema)
+const envLayer = fromProcess(envSchema)
 
 // For development with .env
-const envLayer = EnvLayer.fromDotenv(envSchema, { path: ".env.local" })
+const envLayer = fromDotenv(envSchema, { path: ".env.local" })
 
 // Run your app
 const program = Effect.gen(function* () {
@@ -82,7 +82,7 @@ const program = Effect.gen(function* () {
 Validate environment at startup for clear error reporting:
 
 ```typescript
-import { validate } from "@paulphilp/effect-env"
+import { validate } from "effect-env"
 
 // In dev/test: prints friendly table and continues
 // In production: fails fast with exit code
@@ -103,7 +103,7 @@ DEBUG        | ok           |
 Safely log environment variables without exposing secrets:
 
 ```typescript
-import { redact } from "@paulphilp/effect-env"
+import { redact } from "effect-env"
 
 const safeEnv = redact(process.env)
 // { NODE_ENV: "development", API_KEY: "***", DB_PASSWORD: "***" }
@@ -121,7 +121,7 @@ Redacts keys containing (case-insensitive): `key`, `token`, `secret`, `password`
 Use `fromRecord` for isolated tests:
 
 ```typescript
-import { fromRecord } from "@paulphilp/effect-env"
+import { fromRecord, EnvTag } from "effect-env"
 
 const testEnv = fromRecord(envSchema, {
   NODE_ENV: "test",
@@ -178,7 +178,7 @@ const program = Effect.gen(function* () {
 
 ## Contributing
 
-PRs welcome! Run `bun test` and `bun run typecheck`.
+PRs welcome! Run `npm test` and `npm run typecheck` before submitting.
 
 ## License
 

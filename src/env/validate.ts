@@ -1,5 +1,6 @@
 import { Effect } from "effect"
 import * as S from "effect/Schema"
+import * as ParseResult from "effect/ParseResult"
 
 /**
  * Validation error with details on missing and invalid keys.
@@ -52,13 +53,59 @@ export const validate = <E>(
   return S.decodeUnknown(schema)(source).pipe(
     Effect.asVoid,
     Effect.catchAll((parseError) => {
-      // For simplicity, use the parseError message as report, and extract basic info
       const missing: string[] = []
       const invalid: Array<{ key: string; message: string }> = []
 
-      // TODO: Properly extract missing and invalid from parseError.issues tree
-      // For now, set empty and use message
-      const error = new ValidationError(missing, invalid, parseError.message)
+      // Extract missing and invalid keys from parseError
+      const errors = ParseResult.TreeFormatter.formatErrorSync(parseError)
+      const errorLines = errors.split('\n')
+
+      // Parse error details from the formatted error tree
+      // Pattern: Lines with ["key"] indicate the field, subsequent lines contain error details
+      let currentKey: string | null = null
+      const errorDetails: string[] = []
+
+      for (let i = 0; i < errorLines.length; i++) {
+        const line = errorLines[i]
+
+        // Check if this line contains a key reference like ["API_KEY"]
+        const keyMatch = line.match(/\["([^"]+)"\]/)
+        if (keyMatch) {
+          currentKey = keyMatch[1]
+          errorDetails.length = 0 // Reset details for new key
+          continue
+        }
+
+        // Collect error details for the current key
+        if (currentKey && line.trim()) {
+          errorDetails.push(line.trim())
+        }
+      }
+
+      // After parsing all lines, categorize the error
+      if (currentKey) {
+        const detailsText = errorDetails.join(' ')
+        const isMissing = detailsText.includes('is missing') || detailsText.includes('is required')
+
+        if (isMissing) {
+          missing.push(currentKey)
+        } else {
+          // Extract a meaningful error message
+          const meaningfulLine = errorDetails.find(d =>
+            d.includes('Expected') || d.includes('actual') || d.includes('failure')
+          ) || errorDetails[errorDetails.length - 1] || 'validation failed'
+
+          invalid.push({
+            key: currentKey,
+            message: meaningfulLine
+          })
+        }
+      }
+
+      const report = formatValidationReport(
+        new ValidationError(missing, invalid, errors)
+      )
+      const error = new ValidationError(missing, invalid, report)
 
       if (shouldFail) {
         return Effect.die(error)

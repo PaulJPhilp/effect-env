@@ -10,37 +10,40 @@ export interface Env<E> {
   /**
    * Get a required environment variable by key.
    */
-  get<K extends keyof E>(key: K): any
+  get<K extends keyof E>(key: K): EffectType<E[K], EnvError>
 
   /**
    * Require a variable (same as get, but semantically for required).
    */
-  require<K extends keyof E>(key: K): any
+  require<K extends keyof E>(key: K): EffectType<E[K], MissingVarError>
 
   /**
    * Get a number from environment string.
    */
-  getNumber(key: string): any
+  getNumber(key: string): EffectType<number, EnvError>
 
   /**
    * Get a boolean from environment string.
    */
-  getBoolean(key: string): any
+  getBoolean(key: string): EffectType<boolean, EnvError>
 
   /**
    * Parse JSON from environment string.
    */
-  getJson<T>(key: string): any
+  getJson<T>(key: string): EffectType<T, EnvError>
 
   /**
    * Get all environment variables as raw strings.
    */
-  all(): any
+  all(): EffectType<Record<string, string>, never>
 
   /**
    * Override a key for testing (rejects in production).
    */
-  withOverride<K extends string, A>(key: K, value: string): any
+  withOverride<K extends string, A, E2, R>(
+    key: K,
+    value: string
+  ): (fa: EffectType<A, E2, R>) => EffectType<A, EnvError | E2, R>
 }
 
 /**
@@ -72,9 +75,19 @@ export const makeEnv = <E>(
   parsed: E,
   raw: Record<string, string | undefined>
 ): Env<E> => ({
-  get: <K extends keyof E>(key: K) => Effect.succeed(parsed[key]),
+  get: <K extends keyof E>(key: K) => {
+    // get() returns the value as-is, allowing undefined for optional fields
+    return Effect.succeed(parsed[key])
+  },
 
-  require: <K extends keyof E>(key: K) => Effect.succeed(parsed[key]),
+  require: <K extends keyof E>(key: K) => {
+    // require() fails if the value is undefined or null
+    const value = parsed[key]
+    if (value === undefined || value === null) {
+      return Effect.fail(new MissingVarError(String(key)))
+    }
+    return Effect.succeed(value)
+  },
 
   getNumber: (key: string) => {
     const value = raw[key]
@@ -97,7 +110,7 @@ export const makeEnv = <E>(
     return Effect.fail(new EnvError(`Expected boolean (true|false|1|0|yes|no|on|off), got '${val}' for ${key}`))
   },
 
-  getJson: <T>(key: string): any => {
+  getJson: <T>(key: string): EffectType<T, EnvError> => {
     const value = raw[key]
     if (value === undefined)
       return Effect.fail(new EnvError(`Environment variable ${key} not found`))
@@ -116,18 +129,17 @@ export const makeEnv = <E>(
       ) as Record<string, string>
     ),
 
-  withOverride: <K extends string, A>(key: K, value: string) => (fa: any) => {
+  withOverride: <K extends string, A, E2, R>(
+    key: K,
+    value: string
+  ) => (fa: EffectType<A, E2, R>): EffectType<A, EnvError | E2, R> => {
     if (process.env.NODE_ENV === "production") {
       return Effect.fail(new EnvError("withOverride is not allowed in production"))
     }
     const newRaw = { ...raw, [key]: value }
     const newEnv = makeEnv(parsed, newRaw)
-    // Since fa needs Env<E>, but withOverride returns Effect<A>, but actually, it's a higher-order, but wait.
-    // The spec: withOverride<K extends string, A>(key: K, value: string)(fa: Effect<A>): Effect<A>
-    // So, it's withOverride(key, value) returns a function that takes Effect<A> and returns Effect<A> with overridden env.
-    // But in implementation, to provide the overridden Env, we need to run fa under a layer with newEnv.
-    // But since it's not a layer, perhaps use Effect.provideService(EnvTag, newEnv)(fa)
-    // Yes!
-    return Effect.provideService(EnvTag, newEnv)(fa) as any
+    // withOverride returns a function that takes Effect<A> and returns Effect<A> with overridden env.
+    // Use Effect.provideService to inject the new Env service.
+    return Effect.provideService(fa, EnvTag, newEnv)
   },
 })
