@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.0 (2025-11-13)
+
+- **Feature**: Improve env service tests around optional fields and default
+  values (e.g. `LOG_LEVEL` with default `"info"`).
+- **Chore**: Add `.gitignore` for Node/TypeScript projects to avoid committing
+  `node_modules`, build artifacts, and editor files.
+- **Chore**: Bump package version to `0.3.0`.
+
 ## v0.2.0 (2025-10-28)
 
 Major improvements to type safety, build system, error reporting, and test coverage:
