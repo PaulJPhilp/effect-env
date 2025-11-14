@@ -14,6 +14,20 @@ npm install effect-env
 bun add effect-env
 ```
 
+### Alpha release (t3-env compatibility)
+
+The `0.3.0-alpha` release is published under the `alpha` dist-tag and is
+intended for experimentation only.
+
+Install the alpha build:
+
+```bash
+npm install effect-env@alpha
+```
+
+APIs and behavior may change before a stable `0.3.x` release. Please report
+issues or feedback on the GitHub repo.
+
 ## Quickstart
 
 1. **Define your schema** with `@effect/schema`:
@@ -75,6 +89,36 @@ const program = Effect.gen(function* () {
   // All raw strings
   const all = yield* env.all() // Record<string, string>
 })
+```
+
+### Example: t3-env-style usage (alpha)
+
+With the `0.3.0-alpha` release you can model a simple t3-env-style setup with
+defaults for optional values:
+
+```typescript
+import { Effect, Schema as S } from "effect"
+import { EnvService, fromProcess, makeEnvSchema } from "effect-env"
+
+const envSchema = makeEnvSchema(
+  S.Struct({
+    NODE_ENV: S.Literal("development", "production", "test"),
+    LOG_LEVEL: S.optionalWith(S.String, { default: () => "info" })
+  })
+)
+
+const envLayer = fromProcess(envSchema)
+
+const program = Effect.gen(function* () {
+  const env = yield* EnvService
+
+  const nodeEnv = yield* env.require("NODE_ENV")
+  const logLevel = yield* env.require("LOG_LEVEL")
+
+  console.log({ nodeEnv, logLevel })
+})
+
+Effect.runPromise(Effect.provide(program, envLayer))
 ```
 
 ## Validation
