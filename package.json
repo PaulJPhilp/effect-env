@@ -1,0 +1,38 @@
+{
+	"name": "effect-env",
+	"version": "0.2.0",
+	"description": "Typed, testable, policy-aware env management for Effect apps",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"files": ["dist", "README.md", "CHANGELOG.md"],
+	"scripts": {
+		"clean": "rm -rf dist",
+		"prebuild": "npm run clean",
+		"build": "tsc",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"start": "node dist/index.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/PaulJPhilp/effect-env.git"
+	},
+	"keywords": ["environment", "variables", "effect", "schema", "typed"],
+	"author": "Paul Philp",
+	"license": "MIT",
+	"dependencies": {
+		"dotenv": "^16.6.1",
+		"effect": "^3.19.3"
+	},
+	"devDependencies": {
+		"typescript": "^5.9.3",
+		"vitest": "^4.0.8"
+	}
+}
